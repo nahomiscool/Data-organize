@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Paste Excel Column Data</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    textarea {
+      width: 100%;
+      height: 200px;
+      font-size: 16px;
+      padding: 10px;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .output {
+      margin-top: 20px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      background: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <h1>Paste Excel Column Data</h1>
+  <p>Copy a column from Excel and paste it into the textbox below:</p>
+  <textarea id="excelInput" placeholder="Paste your Excel column here..."></textarea>
+  <button onclick="processData()">Process Data</button>
+
+  <div id="output" class="output" style="display: none;">
+    <h3>Processed Data Arrays:</h3>
+    <pre id="outputContent"></pre>
+    <h3>Matching Values with Row Numbers:</h3>
+    <div id="matchingContent" style="white-space: pre-wrap;"></div>
+  </div>
+
+  <script>
+    // Global arrays to store all inputs and matching values
+    const allData = [];
+    let matchingValues = [];
+
+    function processData() {
+      // Get the pasted data from the textarea
+      const input = document.getElementById('excelInput').value;
+
+      if (!input.trim()) {
+        alert("Please paste some data first!");
+        return;
+      }
+
+      // Split the input into lines and normalize each value
+      const rows = input.split('\n')
+        .filter(row => row.trim() !== '')
+        .map(normalizeValue);
+
+      // Add the new data array to the global allData array
+      allData.push(rows);
+
+      // Clear the textarea for the next input
+      document.getElementById('excelInput').value = '';
+
+      // If we have at least two arrays, check for matching values
+      if (allData.length > 1) {
+        findMatches();
+      }
+
+      // Display all data arrays and matching values
+      displayAllData();
+    }
+
+    function normalizeValue(value) {
+      // Convert to number if possible, otherwise return as string
+      const num = parseFloat(value);
+      return isNaN(num) ? value.trim() : num;
+    }
+
+    function findMatches() {
+      const firstColumn = allData[0]; // First input
+      const secondColumn = allData[1]; // Second input
+
+      matchingValues = [];
+
+      // Find matching values and their row indices
+      firstColumn.forEach((value, rowIndex1) => {
+        const rowIndex2 = secondColumn.indexOf(value);
+        if (rowIndex2 !== -1) {
+          matchingValues.push({
+            value,
+            rowInFirst: rowIndex1 + 1, // Add 1 to make rows 1-based
+            rowInSecond: rowIndex2 + 1
+          });
+        }
+      });
+    }
+
+    function displayAllData() {
+      const outputDiv = document.getElementById('output');
+      const outputContent = document.getElementById('outputContent');
+      const matchingContent = document.getElementById('matchingContent');
+
+      // Display all input arrays
+      outputContent.textContent = JSON.stringify(allData, null, 2);
+
+      // Display matching values with their row numbers
+      if (matchingValues.length > 0) {
+        matchingContent.textContent = matchingValues
+          .map(match => `Value: ${match.value}, Row in First: ${match.rowInFirst}, Row in Second: ${match.rowInSecond}`)
+          .join('\n');
+      } else {
+        matchingContent.textContent = "No matching values found.";
+      }
+
+      outputDiv.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
